@@ -1,0 +1,97 @@
+local repo = 'https://raw.githubusercontent.com/wally-rblx/LinoriaLib/main/'
+
+local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
+local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
+local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
+
+local Window = Library:CreateWindow({
+    Title = 'Drive Cars Down a Hill - SOONSEI',
+    Center = true, 
+    AutoShow = true,
+})
+
+local Tabs = {
+    -- Creates a new tab titled Main
+    Main = Window:AddTab('Main'), 
+    ['UI Settings'] = Window:AddTab('UI Settings'),
+}
+
+local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Main')
+
+
+LeftGroupBox:AddToggle('AutoFarmToggle', {
+    Text = 'Autofarm',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'Money autofarm', -- Information shown when you hover over the toggle
+})
+game.Players.LocalPlayer.CharacterAdded:Connect(function(person)
+    if Toggles.AutoFarmToggle.Value == true then
+        task.wait(1)
+        Toggles.AutoFarmToggle:SetValue(true)
+    end
+end)
+
+Toggles.AutoFarmToggle:OnChanged(function()
+    local HRP = game.Players.LocalPlayer.Character:WaitForChild("HumanoidRootPart")
+    local endpos = CFrame.new(64, -2708, 26804)
+    local startpos = CFrame.new(-60, 512, 181)
+    getgenv().auto = Toggles.AutoFarmToggle.Value
+    
+    while auto and task.wait() do
+        HRP.CFrame = endpos
+        task.wait(3)
+        HRP.CFrame = startpos
+        task.wait(3)
+    end
+end)
+
+LeftGroupBox:AddDropdown('GunDropdown', {
+    Values = {'Chimano', 'M40A5'},
+    Default = 1, -- number index of the value / string
+    Multi = false, -- true / false, allows multiple choices to be selected
+
+    Text = 'Kill all',
+    Tooltip = 'This the gun you own to kill all', -- Information shown when you hover over the textbox
+})
+
+local killAllButton = LeftGroupBox:AddButton('Kill All', function()
+	local p = game.Players
+	if Options.GunDropdown.Value then
+	    local gun = game:GetService("ReplicatedStorage").Config:FindFirstChild(Options.GunDropdown.Value)
+    	for _ = 1,20 do
+	        for _, Child in next, p:GetPlayers() do
+		      if Child ~= p.LocalPlayer then
+			      local args = {
+			          [1] = 2,
+			          [2] = game:GetService("ReplicatedStorage").Config.ChimanoSubcompact, -- M40A5 --ChimanoSubcompact
+			          [3] = Child.Character.Head
+			      }
+			      game:GetService("ReplicatedStorage").GWeaponRemote:FireServer(unpack(args))
+		      end
+	        end
+    	end
+    end
+end)
+local DuneBuggyButton = LeftGroupBox:AddButton('SpawnDune', function()
+    local args = {
+    [1] = 0,
+    [2] = "Scout_Car"
+}
+
+game:GetService("ReplicatedStorage").SpawnCar:FireServer(unpack(args))
+
+end)
+
+local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
+MenuGroup:AddButton('Unload', function() Library:Unload() end)
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' }) 
+
+Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({ 'MenuKeybind' }) 
+SaveManager:BuildConfigSection(Tabs['UI Settings']) 
+ThemeManager:ApplyToTab(Tabs['UI Settings'])
